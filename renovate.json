@@ -1,0 +1,23 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:best-practices",
+    "config:js-lib",
+    ":automergePr",
+    ":automergeMinor",
+    ":automergeTypes",
+    "security:minimumReleaseAgeNpm",
+    "group:definitelyTyped",
+    "schedule:nonOfficeHours",
+    ":separateMultipleMajorReleases",
+    "schedule:automergeNonOfficeHours",
+    ":automergeRequireAllStatusChecks"
+  ],
+  "packageRules": [
+    {
+      "groupName": "fumadocs monorepo",
+      "matchPackageNames": ["/^fumadocs-/"],
+      "matchUpdateTypes": ["digest", "patch", "minor", "major"]
+    }
+  ]
+}
