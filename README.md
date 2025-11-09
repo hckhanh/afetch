@@ -1,10 +1,12 @@
-# what-the-fetch
+# what-the-fetch!
 
 Type-safe API client with schema validation using Standard Schema.
 
 [![Test](https://github.com/hckhanh/what-the-fetch/actions/workflows/test.yml/badge.svg)](https://github.com/hckhanh/what-the-fetch/actions/workflows/test.yml)
 [![codecov](https://codecov.io/github/hckhanh/what-the-fetch/graph/badge.svg?token=6W7S96H6OT)](https://codecov.io/github/hckhanh/what-the-fetch)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=hckhanh_what-the-fetch&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=hckhanh_what-the-fetch)
 [![Bundle Size](https://badgen.net/bundlephobia/minzip/what-the-fetch)](https://bundlephobia.com/result?p=what-the-fetch)
+[![CodSpeed Badge](https://img.shields.io/endpoint?url=https://codspeed.io/badge.json)](https://codspeed.io/hckhanh/what-the-fetch?utm_source=badge)
 
 what-the-fetch is a type-safe API client library that integrates schema validation with fetch requests, leveraging the Standard Schema specification for maximum flexibility and type safety.
 
