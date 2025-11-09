@@ -1,5 +1,5 @@
 {
-  "name": "afetch",
+  "name": "what-the-fetch",
   "description": "Type-safe API client with schema validation using Standard Schema",
   "version": "1.0.0",
   "author": {
@@ -10,10 +10,10 @@
   "homepage": "https://fetch.khanh.id",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/hckhanh/afetch.git"
+    "url": "git+https://github.com/hckhanh/what-the-fetch.git"
   },
   "bugs": {
-    "url": "https://github.com/hckhanh/afetch/issues",
+    "url": "https://github.com/hckhanh/what-the-fetch/issues",
     "email": "hi@khanh.id"
   },
   "private": false,
