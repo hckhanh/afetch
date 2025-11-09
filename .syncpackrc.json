@@ -39,7 +39,7 @@
     {
       "label": "All non-peer dependencies must be pinned",
       "range": "",
-      "dependencyTypes": ["!peer"],
+      "dependencyTypes": ["!peer", "!prod"],
       "dependencies": ["**"],
       "packages": ["**"]
     },
