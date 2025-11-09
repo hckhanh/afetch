@@ -1,5 +1,11 @@
 # what-the-fetch
 
+## 1.0.3
+
+### Patch Changes
+
+- 0f609bc: Update dependency constraints for `@standard-schema/spec` and `fast-url` to use caret ranges
+
 ## 1.0.2
 
 ### Patch Changes
