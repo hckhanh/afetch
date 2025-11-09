@@ -1,13 +1,13 @@
 import path from 'node:path'
-import jsrJson from '../jsr.json'
+import denoJson from '../deno.json'
 import packageJson from '../package.json'
 
 console.log(`NPM version: ${packageJson.version}`)
-console.log(`JSR version: ${jsrJson.version}`)
+console.log(`JSR version: ${denoJson.version}`)
 
 await Bun.write(
-  path.resolve(__dirname, '../jsr.json'),
-  JSON.stringify({ ...jsrJson, version: packageJson.version }, null, 2) + '\n',
+  path.resolve(__dirname, '../deno.json'),
+  JSON.stringify({ ...denoJson, version: packageJson.version }, null, 2) + '\n',
 )
 
-console.log('Updated jsr.json version to match package.json version.')
+console.log('Updated deno.json version to match package.json version.')
