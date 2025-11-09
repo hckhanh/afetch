@@ -1,5 +1,5 @@
 ---
-"what-the-fetch": major
+"what-the-fetch": patch
 ---
 
 Renamed package from `afetch` to `what-the-fetch` to comply with npm naming requirements. The name `afetch` was too similar to the existing `a-fetch` package on npm.
