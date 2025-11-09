@@ -40,6 +40,9 @@
       },
       "nursery": {
         "recommended": true
+      },
+      "complexity": {
+        "noBannedTypes": "off"
       }
     }
   },

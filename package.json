@@ -65,5 +65,8 @@
     "concat",
     "concatenate"
   ],
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "fast-url": "6.0.1"
+  }
 }
