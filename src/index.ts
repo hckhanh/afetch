@@ -87,7 +87,7 @@ export function createFetch<Schema extends ApiSchema>(
   init?: RequestInit,
 ) => Promise<ApiResponse<Schema, Path>> {
   return async (path, options, init?: RequestInit) => {
-    const { params, query, body } = (options || {}) as Record<
+    const { params, query, body } = (options ?? {}) as Record<
       'params' | 'query' | 'body',
       Record<string, unknown>
     >
