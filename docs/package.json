@@ -1,8 +1,8 @@
 {
   "name": "afetch-docs",
+  "description": "Documentation website for afetch - Type-safe API client with schema validation",
   "version": "0.0.0",
   "private": true,
-  "description": "Documentation website for afetch - Type-safe API client with schema validation",
   "scripts": {
     "build": "next build",
     "dev": "next dev",
