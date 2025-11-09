@@ -69,10 +69,10 @@ Schema definition for an API. Maps API paths to their schema definitions.
 type ApiSchema = Record<
   string,
   {
-    params?: StandardSchemaV1<Record<string, unknown>, unknown>
-    query?: StandardSchemaV1<Record<string, unknown>, unknown>
-    body?: StandardSchemaV1<Record<string, unknown>, unknown>
-    response?: StandardSchemaV1<Record<string, unknown>, unknown>
+    params?: StandardSchemaV1<Record<string, unknown>>
+    query?: StandardSchemaV1<Record<string, unknown>>
+    body?: StandardSchemaV1<Record<string, unknown>>
+    response?: StandardSchemaV1<Record<string, unknown>>
   }
 >
 ```

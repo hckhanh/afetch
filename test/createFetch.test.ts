@@ -1,6 +1,6 @@
 import type { StandardSchemaV1 } from '@standard-schema/spec'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { createFetch } from '../src/index'
+import { createFetch } from '../src'
 
 // Mock fetch globally
 let fetchMock: ReturnType<typeof vi.fn>
@@ -17,7 +17,7 @@ afterEach(() => {
 })
 
 // Helper to create a mock Standard Schema
-function createMockSchema<T>(_value: T): StandardSchemaV1<T, unknown> {
+function createMockSchema<T>(_value: T): StandardSchemaV1<T> {
   return {
     '~standard': {
       version: 1,
@@ -43,7 +43,7 @@ describe('createFetch', () => {
     } as Response)
 
     const apiFetch = createFetch(api, 'https://api.example.com')
-    const result = await apiFetch('/users', {})
+    const result = await apiFetch('/users')
 
     expect(fetchMock).toHaveBeenCalledWith(
       'https://api.example.com/users',
@@ -180,16 +180,12 @@ describe('createFetch', () => {
     } as Response)
 
     const apiFetch = createFetch(api, 'https://api.example.com')
-    await apiFetch(
-      '/users',
-      {},
-      {
-        headers: {
-          Authorization: 'Bearer token',
-          'X-Custom': 'value',
-        },
+    await apiFetch('/users', undefined, {
+      headers: {
+        Authorization: 'Bearer token',
+        'X-Custom': 'value',
       },
-    )
+    })
 
     expect(fetchMock).toHaveBeenCalledWith(
       'https://api.example.com/users',
@@ -217,9 +213,7 @@ describe('createFetch', () => {
 
     const apiFetch = createFetch(api, 'https://api.example.com')
 
-    await expect(apiFetch('/users', {})).rejects.toThrow(
-      'HTTP error! status: 404',
-    )
+    await expect(apiFetch('/users')).rejects.toThrow('HTTP error! status: 404')
   })
 
   it('should validate response with schema', async () => {
@@ -232,7 +226,7 @@ describe('createFetch', () => {
             vendor: 'mock',
             validate: async () => validationError,
           },
-        } as StandardSchemaV1<unknown, unknown>,
+        } as StandardSchemaV1<Record<string, unknown>>,
       },
     }
 
@@ -243,7 +237,7 @@ describe('createFetch', () => {
 
     const apiFetch = createFetch(api, 'https://api.example.com')
 
-    await expect(apiFetch('/users', {})).rejects.toThrow('Validation failed')
+    await expect(apiFetch('/users')).rejects.toThrow('Validation failed')
   })
 
   it('should return unvalidated data if no response schema', async () => {
@@ -276,7 +270,7 @@ describe('createFetch', () => {
     } as Response)
 
     const apiFetch = createFetch(api, 'https://api.example.com')
-    await apiFetch('/users', {})
+    await apiFetch('/users')
 
     expect(fetchMock).toHaveBeenCalledWith(
       'https://api.example.com/users',

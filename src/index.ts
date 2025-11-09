@@ -68,7 +68,7 @@ export function createFetch<Schema extends ApiSchema>(
   baseUrl: string,
 ): <Path extends ApiPath<Schema>>(
   path: Path,
-  options: FetchOptions<Schema, Path>,
+  options?: FetchOptions<Schema, Path>,
   baseInit?: RequestInit,
 ) => Promise<ApiResponse<Schema, Path>> {
   return async (path, options, baseInit?: RequestInit) => {
