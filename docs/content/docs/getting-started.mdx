@@ -1,6 +1,6 @@
 ---
 title: Getting Started
-description: Quick start guide to install and use fast-url in your JavaScript or TypeScript project
+description: Quick start guide to install and use afetch in your JavaScript or TypeScript project
 ---
 
 import { Callout } from 'fumadocs-ui/components/callout';
@@ -10,38 +10,48 @@ import { Step, Steps } from 'fumadocs-ui/components/steps';
 
 ## Installation
 
-Install fast-url using your preferred package manager:
+Install afetch using your preferred package manager:
 
-<Tabs items={['bun', 'pnpm', 'yarn', 'npm', 'jsr']}>
+<Tabs items={['bun', 'npm', 'jsr']}>
   <Tab value="bun">
     ```bash
-    bun add fast-url
-    ```
-  </Tab>
-  <Tab value="pnpm">
-    ```bash
-    pnpm add fast-url
-    ```
-  </Tab>
-  <Tab value="yarn">
-    ```bash
-    yarn add fast-url
+    bun add afetch
     ```
   </Tab>
   <Tab value="npm">
     ```bash
-    npm install fast-url
+    npm install afetch
     ```
   </Tab>
   <Tab value="jsr">
     ```bash
-    deno add jsr:@hckhanh/fast-url
+    deno add jsr:@hckhanh/afetch
+    ```
+  </Tab>
+</Tabs>
+
+You'll also need a schema validation library that implements Standard Schema:
+
+<Tabs items={['Zod', 'Valibot', 'ArkType']}>
+  <Tab value="Zod">
+    ```bash
+    npm install zod
+    ```
+  </Tab>
+  <Tab value="Valibot">
+    ```bash
+    npm install valibot
+    ```
+  </Tab>
+  <Tab value="ArkType">
+    ```bash
+    npm install arktype
     ```
   </Tab>
 </Tabs>
 
 <Callout title="TypeScript Support" type="info">
-  fast-url is written in TypeScript and includes type definitions out of the
+  afetch is written in TypeScript and includes type definitions out of the
   box. No need to install separate `@types` packages!
 </Callout>
 
@@ -49,298 +59,417 @@ Install fast-url using your preferred package manager:
 
 ### Importing
 
-<Tabs items={['ES Modules/TypeScript', 'CommonJS']}>
-  <Tab value="ES Modules/TypeScript">
-    ```javascript
-    import { createUrl } from 'fast-url';
-    ```
-  </Tab>
-  <Tab value="CommonJS">
-    ```javascript
-    const { createUrl } = require('fast-url');
-    ```
-  </Tab>
-</Tabs>
+```typescript
+import { createFetch } from 'afetch';
+import { z } from 'zod'; // or your preferred schema library
+```
 
 ### Quick Examples
 
 Here are some common use cases to get you started:
 
-#### Path Parameters
+#### Simple GET Request
 
-Replace placeholders in a URL path with actual values:
+Define a schema and make a type-safe request:
 
-```javascript
-import { createUrl } from 'fast-url';
+```typescript
+import { createFetch } from 'afetch';
+import { z } from 'zod';
 
-const userId = 123;
-const url = createUrl('https://api.example.com', '/users/:id', { id: userId });
-console.log(url);
-// → 'https://api.example.com/users/123'
+const api = {
+  '/users/:id': {
+    params: z.object({ id: z.number() }),
+    response: z.object({
+      id: z.number(),
+      name: z.string(),
+      email: z.string()
+    })
+  }
+};
+
+const apiFetch = createFetch(api, 'https://api.example.com');
+
+const user = await apiFetch('/users/:id', {
+  params: { id: 123 }
+});
+// user is typed as { id: number; name: string; email: string }
 ```
 
-#### Query Parameters
+#### With Query Parameters
 
-Add query string parameters to a URL:
+Add query parameters to your request:
 
-```javascript
-import { createUrl } from 'fast-url';
+```typescript
+const api = {
+  '/users': {
+    query: z.object({
+      limit: z.number().optional(),
+      offset: z.number().optional(),
+      sort: z.string().optional()
+    }),
+    response: z.array(z.object({
+      id: z.number(),
+      name: z.string()
+    }))
+  }
+};
 
-const url = createUrl('https://api.example.com', '/users', {
-  limit: 10,
-  offset: 20,
-  sort: 'name',
+const apiFetch = createFetch(api, 'https://api.example.com');
+
+const users = await apiFetch('/users', {
+  query: { limit: 10, offset: 20, sort: 'name' }
 });
-console.log(url);
-// → 'https://api.example.com/users?limit=10&offset=20&sort=name'
+// users is typed as Array<{ id: number; name: string }>
 ```
 
-#### Combined Path and Query Parameters
+#### POST Request with Body
 
-Mix path substitution with query parameters:
+Send data in the request body:
 
-```javascript
-import { createUrl } from 'fast-url';
+```typescript
+const api = {
+  '/users': {
+    body: z.object({
+      name: z.string(),
+      email: z.string().email()
+    }),
+    response: z.object({
+      id: z.number(),
+      name: z.string(),
+      email: z.string()
+    })
+  }
+};
 
-const url = createUrl('https://api.example.com', '/users/:id/posts', {
-  id: 123,
-  limit: 10,
-  published: true,
+const apiFetch = createFetch(api, 'https://api.example.com');
+
+const newUser = await apiFetch('/users', {
+  body: {
+    name: 'John Doe',
+    email: 'john@example.com'
+  }
 });
-console.log(url);
-// → 'https://api.example.com/users/123/posts?limit=10&published=true'
+// newUser is typed as { id: number; name: string; email: string }
 ```
 
 ## Step-by-Step Tutorial
 
-Let's build a simple REST API client using fast-url:
+Let's build a complete type-safe API client using afetch:
 
 <Steps>
   <Step>
-    ### Create the API Client Class
+    ### Define Your API Schema
     
-    Start by creating a basic API client structure:
+    Start by defining schemas for all your API endpoints:
     
     ```typescript
-    import { createUrl } from 'fast-url';
+    import { z } from 'zod';
     
-    class BlogAPI {
-      private baseUrl = 'https://api.blog.com';
-      
-      constructor(apiKey: string) {
-        this.apiKey = apiKey;
+    const api = {
+      '/posts': {
+        query: z.object({
+          page: z.number().optional(),
+          limit: z.number().optional(),
+          tag: z.string().optional()
+        }),
+        response: z.array(z.object({
+          id: z.number(),
+          title: z.string(),
+          excerpt: z.string()
+        }))
+      },
+      '/posts/:id': {
+        params: z.object({ id: z.number() }),
+        response: z.object({
+          id: z.number(),
+          title: z.string(),
+          content: z.string(),
+          author: z.string()
+        })
+      },
+      '/posts': {
+        body: z.object({
+          title: z.string(),
+          content: z.string()
+        }),
+        response: z.object({
+          id: z.number(),
+          title: z.string(),
+          content: z.string()
+        })
       }
-    }
+    } as const;
     ```
   </Step>
   
   <Step>
-    ### Add a Method to Fetch Posts
+    ### Create the Fetch Function
     
-    Use createUrl to build the endpoint URL with query parameters:
+    Use createFetch to build your typed API client:
     
     ```typescript
-    async getPosts(options = {}) {
-      const url = createUrl(this.baseUrl, '/posts', {
-        page: options.page || 1,
-        limit: options.limit || 10,
-        tag: options.tag
-      });
-      
-      const response = await fetch(url, {
-        headers: { 'Authorization': `Bearer ${this.apiKey}` }
-      });
-      
-      return response.json();
-    }
+    import { createFetch } from 'afetch';
+    
+    const apiFetch = createFetch(api, 'https://api.blog.com');
     ```
   </Step>
   
   <Step>
-    ### Add a Method to Fetch a Single Post
+    ### Make Type-Safe Requests
     
-    Use path parameters for resource IDs:
-    
-    ```typescript
-    async getPost(postId: number) {
-      const url = createUrl(this.baseUrl, '/posts/:id', { id: postId });
-      
-      const response = await fetch(url, {
-        headers: { 'Authorization': `Bearer ${this.apiKey}` }
-      });
-      
-      return response.json();
-    }
-    ```
-  </Step>
-  
-  <Step>
-    ### Use the API Client
-    
-    Now you can use your API client with clean, type-safe URLs:
+    Now you can make fully typed requests with autocomplete:
     
     ```typescript
-    const api = new BlogAPI('your-api-key');
-    
-    // Fetch paginated posts with a tag filter
-    const posts = await api.getPosts({ 
-      page: 2, 
-      limit: 20, 
-      tag: 'javascript' 
+    // Fetch posts with query parameters
+    const posts = await apiFetch('/posts', {
+      query: { page: 2, limit: 20, tag: 'javascript' }
     });
-    // URL: https://api.blog.com/posts?page=2&limit=20&tag=javascript
+    // posts is typed as Array<{ id: number; title: string; excerpt: string }>
     
-    // Fetch a specific post
-    const post = await api.getPost(42);
-    // URL: https://api.blog.com/posts/42
+    // Fetch a single post
+    const post = await apiFetch('/posts/:id', {
+      params: { id: 42 }
+    });
+    // post is typed as { id: number; title: string; content: string; author: string }
+    ```
+  </Step>
+  
+  <Step>
+    ### Add Custom Headers (Optional)
+    
+    You can pass custom headers using the third parameter:
+    
+    ```typescript
+    const post = await apiFetch(
+      '/posts/:id',
+      { params: { id: 42 } },
+      {
+        headers: {
+          'Authorization': 'Bearer your-api-key',
+          'X-Custom-Header': 'value'
+        }
+      }
+    );
     ```
   </Step>
 </Steps>
 
 ## Common Patterns
 
-### Handling Optional Parameters
+### Using Different Schema Libraries
 
-fast-url automatically filters out `null` and `undefined` values:
+afetch works with any Standard Schema implementation:
 
-```javascript
-import { createUrl } from 'fast-url';
+<Tabs items={['Zod', 'Valibot', 'ArkType']}>
+  <Tab value="Zod">
+    ```typescript
+    import { createFetch } from 'afetch';
+    import { z } from 'zod';
+    
+    const api = {
+      '/users/:id': {
+        params: z.object({ id: z.number() }),
+        response: z.object({ id: z.number(), name: z.string() })
+      }
+    };
+    
+    const apiFetch = createFetch(api, 'https://api.example.com');
+    ```
+  </Tab>
+  <Tab value="Valibot">
+    ```typescript
+    import { createFetch } from 'afetch';
+    import * as v from 'valibot';
+    
+    const api = {
+      '/users/:id': {
+        params: v.object({ id: v.number() }),
+        response: v.object({ id: v.number(), name: v.string() })
+      }
+    };
+    
+    const apiFetch = createFetch(api, 'https://api.example.com');
+    ```
+  </Tab>
+  <Tab value="ArkType">
+    ```typescript
+    import { createFetch } from 'afetch';
+    import { type } from 'arktype';
+    
+    const api = {
+      '/users/:id': {
+        params: type({ id: 'number' }),
+        response: type({ id: 'number', name: 'string' })
+      }
+    };
+    
+    const apiFetch = createFetch(api, 'https://api.example.com');
+    ```
+  </Tab>
+</Tabs>
 
-const url = createUrl('https://api.example.com', '/search', {
-  q: 'javascript',
-  category: null, // Will be omitted
-  author: undefined, // Will be omitted
-  limit: 10,
+### Combining Path and Query Parameters
+
+Mix path parameters with query parameters:
+
+```typescript
+const api = {
+  '/users/:id/posts': {
+    params: z.object({ id: z.number() }),
+    query: z.object({
+      limit: z.number().optional(),
+      published: z.boolean().optional()
+    }),
+    response: z.array(z.object({
+      id: z.number(),
+      title: z.string()
+    }))
+  }
+};
+
+const apiFetch = createFetch(api, 'https://api.example.com');
+
+const posts = await apiFetch('/users/:id/posts', {
+  params: { id: 123 },
+  query: { limit: 10, published: true }
 });
-console.log(url);
-// → 'https://api.example.com/search?q=javascript&limit=10'
+// URL: https://api.example.com/users/123/posts?limit=10&published=true
 ```
 
-### Working with Arrays
+### Custom Request Configuration
 
-Arrays are automatically converted to repeated parameters:
+Pass additional fetch options as the third parameter:
 
-```javascript
-import { query } from 'fast-url';
-
-const queryString = query({
-  tags: ['javascript', 'typescript', 'node'],
-  limit: 10,
-});
-console.log(queryString);
-// → 'tags=javascript&tags=typescript&tags=node&limit=10'
+```typescript
+const user = await apiFetch(
+  '/users/:id',
+  { params: { id: 123 } },
+  {
+    headers: {
+      'Authorization': 'Bearer token',
+      'X-API-Key': 'your-key'
+    },
+    cache: 'no-cache',
+    signal: abortController.signal
+  }
+);
 ```
 
-### Building Query Strings Only
+### Reusing the Same Fetch Function
 
-Use the `query` helper when you only need a query string:
+Create one fetch function and reuse it throughout your application:
 
-```javascript
-import { query } from 'fast-url';
+```typescript
+// api.ts
+export const apiFetch = createFetch(api, 'https://api.example.com');
 
-const params = query({
-  name: 'John Doe',
-  age: 30,
-  city: 'New York',
-});
-console.log(params);
-// → 'name=John%20Doe&age=30&city=New%20York'
+// users.ts
+import { apiFetch } from './api';
+
+const user = await apiFetch('/users/:id', { params: { id: 123 } });
+
+// posts.ts
+import { apiFetch } from './api';
+
+const posts = await apiFetch('/posts', { query: { limit: 10 } });
 ```
 
-### Substituting Path Parameters Only
+## Schema Validation Benefits
 
-Use `subst` when you only need path parameter substitution:
+afetch validates both requests and responses automatically:
 
-```javascript
-import { subst } from 'fast-url';
+```typescript
+const api = {
+  '/users': {
+    body: z.object({
+      name: z.string().min(3),
+      email: z.string().email()
+    }),
+    response: z.object({
+      id: z.number(),
+      name: z.string(),
+      email: z.string()
+    })
+  }
+};
 
-const path = subst('/users/:userId/posts/:postId', {
-  userId: 123,
-  postId: 456,
+const apiFetch = createFetch(api, 'https://api.example.com');
+
+// ✅ Valid request
+const user = await apiFetch('/users', {
+  body: {
+    name: 'John Doe',
+    email: 'john@example.com'
+  }
 });
-console.log(path);
-// → '/users/123/posts/456'
-```
 
-### Joining URL Parts
-
-Use `join` to safely concatenate URL segments:
-
-```javascript
-import { join } from 'fast-url';
-
-const url = join('https://api.example.com/', '/', '/users');
-console.log(url);
-// → 'https://api.example.com/users'
-
-// Works with any separator
-const query = join('name=John', '&', '&age=30');
-console.log(query);
-// → 'name=John&age=30'
-```
-
-## Special Characters and Unicode
-
-fast-url properly handles special characters and Unicode:
-
-```javascript
-import { createUrl } from 'fast-url';
-
-// Special characters are automatically encoded
-const url1 = createUrl('https://api.example.com', '/search', {
-  q: 'hello world & goodbye',
-  filter: 'price>100',
-});
-// → 'https://api.example.com/search?q=hello%20world%20%26%20goodbye&filter=price%3E100'
-
-// Unicode characters are properly handled
-const url2 = createUrl('https://api.example.com', '/users/:name', {
-  name: '田中太郎',
-});
-// → 'https://api.example.com/users/%E7%94%B0%E4%B8%AD%E5%A4%AA%E9%83%8E'
-
-// Even emojis work correctly
-const url3 = createUrl('https://api.example.com', '/posts', {
-  mood: '😊🎉',
-});
-// → 'https://api.example.com/posts?mood=%F0%9F%98%8A%F0%9F%8E%89'
+// ❌ This would fail at runtime with validation error
+try {
+  await apiFetch('/users', {
+    body: {
+      name: 'Jo', // Too short
+      email: 'invalid-email' // Invalid format
+    }
+  });
+} catch (error) {
+  console.error('Validation failed:', error);
+}
 ```
 
 ## Error Handling
 
-fast-url validates path parameters and throws helpful errors:
+afetch provides clear error messages for both validation and HTTP errors:
 
-```javascript
-import { createUrl } from 'fast-url';
+```typescript
+const api = {
+  '/users/:id': {
+    params: z.object({ id: z.number() }),
+    response: z.object({ id: z.number(), name: z.string() })
+  }
+};
+
+const apiFetch = createFetch(api, 'https://api.example.com');
 
 try {
-  // Missing required path parameter
-  createUrl('https://api.example.com', '/users/:id', {});
+  const user = await apiFetch('/users/:id', { params: { id: 123 } });
 } catch (error) {
-  console.error(error.message);
-  // → "Missing value for path parameter id."
+  // Could be:
+  // 1. HTTP error (status !== 2xx)
+  // 2. Schema validation error
+  // 3. Network error
+  console.error('Request failed:', error);
 }
+```
 
+### Handling HTTP Errors
+
+afetch automatically throws on non-2xx status codes:
+
+```typescript
 try {
-  // Invalid path parameter type
-  createUrl('https://api.example.com', '/users/:id', {
-    id: { invalid: 'object' },
-  });
+  const user = await apiFetch('/users/:id', { params: { id: 999 } });
 } catch (error) {
-  console.error(error.message);
-  // → "Path parameter id cannot be of type object. Allowed types are: boolean, string, number."
+  if (error.message.includes('HTTP error')) {
+    console.error('Request failed with status:', error);
+    // Handle 404, 500, etc.
+  }
 }
+```
 
+### Handling Validation Errors
+
+Schema validation errors are thrown when response doesn't match schema:
+
+```typescript
 try {
-  // Empty string path parameter
-  createUrl('https://api.example.com', '/users/:id', { id: '' });
+  const user = await apiFetch('/users/:id', { params: { id: 123 } });
 } catch (error) {
-  console.error(error.message);
-  // → "Path parameter id cannot be an empty string."
+  // Validation error if response doesn't match schema
+  console.error('Invalid response:', error);
 }
 ```
 
 <Callout title="Type Safety" type="success">
-  When using TypeScript, many of these errors can be caught at compile time
-  thanks to fast-url's type definitions!
+  With TypeScript, most parameter errors are caught at compile time, preventing
+  runtime errors before they happen!
 </Callout>

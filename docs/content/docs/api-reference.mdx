@@ -1,509 +1,638 @@
 ---
 title: API Reference
-description: Complete API documentation for all fast-url functions with detailed examples and type signatures
+description: Complete API documentation for afetch with detailed examples and type signatures
+---
+
+## Main Function
+
+### `createFetch()`
+
+Creates a type-safe fetch function for your API.
+
+```typescript
+function createFetch<Schema extends ApiSchema>(
+  apis: Schema,
+  baseUrl: string
+): <Path extends ApiPath<Schema>>(
+  path: Path,
+  options: FetchOptions<Schema, Path>,
+  baseInit?: RequestInit
+) => Promise<ApiResponse<Schema, Path>>
+```
+
+**Parameters:**
+
+- `apis` - An object mapping API paths to their schema definitions
+- `baseUrl` - The base URL for all API requests
+
+**Returns:** A typed fetch function that accepts:
+- `path` - The API path (must be a key from your schema)
+- `options` - Request options (params, query, body) based on the path's schema
+- `baseInit` - Optional RequestInit to customize the fetch request
+
+**Example:**
+
+```typescript
+import { createFetch } from 'afetch';
+import { z } from 'zod';
+
+const api = {
+  '/users/:id': {
+    params: z.object({ id: z.number() }),
+    query: z.object({ fields: z.string().optional() }),
+    response: z.object({
+      id: z.number(),
+      name: z.string(),
+      email: z.string()
+    })
+  }
+};
+
+const apiFetch = createFetch(api, 'https://api.example.com');
+
+const user = await apiFetch('/users/:id', {
+  params: { id: 123 },
+  query: { fields: 'name,email' }
+});
+// user is typed as { id: number; name: string; email: string }
+```
+
 ---
 
 ## Type Definitions
 
-### `ParamMap`
+### `ApiSchema`
 
-The base type for parameter objects used throughout the API.
-
-```typescript
-type ParamMap = Record<string, unknown>;
-```
-
-All parameter values are converted to strings during URL encoding. The following types are supported:
-
-- `string` - Used as-is (after URL encoding)
-- `number` - Converted to string
-- `boolean` - Converted to `'true'` or `'false'`
-- `Array` - Each element becomes a separate parameter with the same key
-- `null` / `undefined` - Filtered out and not included in the URL
-
----
-
-## Main Functions
-
-### `createUrl()`
-
-The primary function for building URLs with multiple overloads for different use cases.
-
-#### Signature 1: Base Template with Parameters
-
-Build a URL using only a template string with path parameters. Unused parameters become query parameters.
+Schema definition for an API. Maps API paths to their schema definitions.
 
 ```typescript
-function createUrl(baseTemplate: string, params: ParamMap): string;
+type ApiSchema = Record<
+  string,
+  {
+    params?: StandardSchemaV1<Record<string, unknown>, unknown>
+    query?: StandardSchemaV1<Record<string, unknown>, unknown>
+    body?: StandardSchemaV1<Record<string, unknown>, unknown>
+    response?: StandardSchemaV1<Record<string, unknown>, unknown>
+  }
+>
 ```
 
-**Parameters:**
+Each path in your schema can have:
 
-- `baseTemplate` - A URL template containing zero or more `:param` placeholders
-- `params` - Object with properties that correspond to the `:params` in the template
-
-**Returns:** A complete URL with path parameters substituted and unused parameters as query string
+- `params` - Schema for URL path parameters (e.g., `:id`)
+- `query` - Schema for query string parameters
+- `body` - Schema for request body (automatically sets method to POST)
+- `response` - Schema for response validation
 
 **Example:**
 
-```javascript
-import { createUrl } from 'fast-url';
+```typescript
+import { z } from 'zod';
 
-const url = createUrl('http://api.example.com/users/:id', {
-  id: 42,
-  search: 'foo',
-  active: true,
-});
-console.log(url);
-// → 'http://api.example.com/users/42?search=foo&active=true'
+const api: ApiSchema = {
+  '/users/:id': {
+    params: z.object({ id: z.number() }),
+    query: z.object({ fields: z.string().optional() }),
+    response: z.object({ id: z.number(), name: z.string() })
+  },
+  '/users': {
+    query: z.object({
+      limit: z.number().optional(),
+      offset: z.number().optional()
+    }),
+    response: z.array(z.object({ id: z.number(), name: z.string() }))
+  },
+  '/users': {
+    body: z.object({
+      name: z.string(),
+      email: z.string().email()
+    }),
+    response: z.object({
+      id: z.number(),
+      name: z.string(),
+      email: z.string()
+    })
+  }
+};
 ```
 
-#### Signature 2: Base URL with Path
+### `ApiPath<T>`
 
-Concatenate a base URL and path using `/` as separator. Handles duplicate slashes automatically.
+Extract valid API paths from an API schema.
 
 ```typescript
-function createUrl(baseUrl: string, path: string): string;
+type ApiPath<T extends ApiSchema> = keyof T & string
 ```
-
-**Parameters:**
-
-- `baseUrl` - The first part of the URL
-- `path` - The second part of the URL to append
-
-**Returns:** Concatenated URL with exactly one `/` separator
 
 **Example:**
 
-```javascript
-import { createUrl } from 'fast-url';
-
-// Handles trailing/leading slashes
-const url1 = createUrl('http://api.example.com/', '/users');
-console.log(url1);
-// → 'http://api.example.com/users'
-
-// Works without slashes too
-const url2 = createUrl('http://api.example.com', 'users');
-console.log(url2);
-// → 'http://api.example.com/users'
-```
-
-#### Signature 3: Complete URL Building
-
-Build a complete URL by combining base URL, path template, and parameters.
-
 ```typescript
-function createUrl(
-  baseUrl: string,
-  pathTemplate: string,
-  params: ParamMap
-): string;
-```
-
-**Parameters:**
-
-- `baseUrl` - The base URL (protocol + domain)
-- `pathTemplate` - Path template with optional `:param` placeholders
-- `params` - Object with path and query parameters
-
-**Returns:** Complete URL with substituted path parameters and query string
-
-**Example:**
-
-```javascript
-import { createUrl } from 'fast-url';
-
-const url = createUrl('http://api.example.com/', '/users/:id', {
-  id: 42,
-  search: 'foo',
-  limit: 10,
-  offset: 20,
-});
-console.log(url);
-// → 'http://api.example.com/users/42?search=foo&limit=10&offset=20'
-```
-
-<Callout title="Path vs Query Parameters" type="info">
-  Parameters that match `:param` placeholders in the path template are used for
-  path substitution. All other parameters become query string parameters.
-</Callout>
-
----
-
-## Utility Functions
-
-### `query()`
-
-Build a query string from a parameter object.
-
-```typescript
-function query(params: ParamMap): string;
-```
-
-**Parameters:**
-
-- `params` - Object to convert into a query string
-
-**Returns:** URL-encoded query string (without leading `?`)
-
-**Examples:**
-
-```javascript
-import { query } from 'fast-url';
-
-// Basic usage
-const q1 = query({ name: 'John', age: 30 });
-console.log(q1);
-// → 'name=John&age=30'
-
-// Special characters are encoded
-const q2 = query({
-  search: 'hello world',
-  filter: 'price>100',
-});
-console.log(q2);
-// → 'search=hello%20world&filter=price%3E100'
-
-// Arrays create repeated parameters
-const q3 = query({
-  tags: ['javascript', 'typescript'],
-  limit: 10,
-});
-console.log(q3);
-// → 'tags=javascript&tags=typescript&limit=10'
-
-// Null and undefined are filtered out
-const q4 = query({
-  name: 'John',
-  age: null,
-  city: undefined,
-  country: 'USA',
-});
-console.log(q4);
-// → 'name=John&country=USA'
-
-// Empty object returns empty string
-const q5 = query({});
-console.log(q5);
-// → ''
-```
-
-**Use Cases:**
-
-- Building query strings independently
-- Updating existing URLs with new parameters
-- Creating search or filter parameters
-
----
-
-### `subst()`
-
-Substitute path parameters in a template string without building a full URL.
-
-```typescript
-function subst(template: string, params: ParamMap): string;
-```
-
-**Parameters:**
-
-- `template` - String containing `:param` placeholders
-- `params` - Object with keys matching the placeholders
-
-**Returns:** Template with all `:param` placeholders replaced with URL-encoded values
-
-**Examples:**
-
-```javascript
-import { subst } from 'fast-url';
-
-// Basic substitution
-const path1 = subst('/users/:id/posts/:postId', {
-  id: 42,
-  postId: 123,
-});
-console.log(path1);
-// → '/users/42/posts/123'
-
-// Extra parameters are ignored
-const path2 = subst('/users/:id', {
-  id: 42,
-  limit: 10, // Ignored
-  sort: 'name', // Ignored
-});
-console.log(path2);
-// → '/users/42'
-
-// Special characters in values are encoded
-const path3 = subst('/search/:query', {
-  query: 'hello world & goodbye',
-});
-console.log(path3);
-// → '/search/hello%20world%20%26%20goodbye'
-
-// Unicode is properly handled
-const path4 = subst('/users/:name', {
-  name: '田中',
-});
-console.log(path4);
-// → '/users/%E7%94%B0%E4%B8%AD'
-```
-
-**Errors:**
-
-```javascript
-import { subst } from 'fast-url';
-
-// Missing parameter throws error
-try {
-  subst('/users/:id', {});
-} catch (error) {
-  console.error(error.message);
-  // → "Missing value for path parameter id."
-}
-
-// Invalid type throws error
-try {
-  subst('/users/:id', { id: {} });
-} catch (error) {
-  console.error(error.message);
-  // → "Path parameter id cannot be of type object. Allowed types are: boolean, string, number."
-}
-
-// Empty string throws error
-try {
-  subst('/users/:id', { id: '' });
-} catch (error) {
-  console.error(error.message);
-  // → "Path parameter id cannot be an empty string."
-}
-```
-
-**Use Cases:**
-
-- Building URL paths without query strings
-- Template rendering
-- Path parameter validation
-
----
-
-### `join()`
-
-Join two strings using a separator, ensuring exactly one occurrence at the boundary.
-
-```typescript
-function join(part1: string, separator: string, part2: string): string;
-```
-
-**Parameters:**
-
-- `part1` - First string
-- `separator` - Separator character(s)
-- `part2` - Second string
-
-**Returns:** Joined string with exactly one separator
-
-**Examples:**
-
-```javascript
-import { join } from 'fast-url';
-
-// URL path joining
-const url1 = join('http://api.example.com/', '/', '/users');
-console.log(url1);
-// → 'http://api.example.com/users'
-
-// Works with different separators
-const url2 = join('http://api.example.com', '/', 'users');
-console.log(url2);
-// → 'http://api.example.com/users'
-
-// Query string joining
-const query1 = join('name=John', '&', '&age=30');
-console.log(query1);
-// → 'name=John&age=30'
-
-// Handles empty strings
-const url3 = join('', '/', 'users');
-console.log(url3);
-// → 'users'
-
-const url4 = join('http://api.example.com', '/', '');
-console.log(url4);
-// → 'http://api.example.com'
-
-// Multiple character separators
-const text = join('Hello', ', ', ', World');
-console.log(text);
-// → 'Hello, World'
-```
-
-**Use Cases:**
-
-- Safe URL concatenation
-- Building paths from segments
-- Joining strings with any separator
-
----
-
-## Advanced Examples
-
-### Building Complex API Clients
-
-```typescript
-import { createUrl, query } from 'fast-url';
-
-class GitHubAPI {
-  private baseUrl = 'https://api.github.com';
-
-  // List user repositories with filters
-  getUserRepos(
-    username: string,
-    options: {
-      type?: 'all' | 'owner' | 'member';
-      sort?: 'created' | 'updated' | 'pushed' | 'full_name';
-      direction?: 'asc' | 'desc';
-      per_page?: number;
-      page?: number;
-    } = {}
-  ) {
-    return createUrl(this.baseUrl, '/users/:username/repos', {
-      username,
-      ...options,
-    });
-  }
-
-  // Get a specific commit
-  getCommit(owner: string, repo: string, sha: string) {
-    return createUrl(this.baseUrl, '/repos/:owner/:repo/commits/:sha', {
-      owner,
-      repo,
-      sha,
-    });
-  }
-
-  // Search repositories
-  searchRepos(
-    q: string,
-    options: {
-      sort?: 'stars' | 'forks' | 'updated';
-      order?: 'asc' | 'desc';
-      per_page?: number;
-    } = {}
-  ) {
-    return createUrl(this.baseUrl, '/search/repositories', {
-      q,
-      ...options,
-    });
-  }
-}
-
-const github = new GitHubAPI();
-
-console.log(
-  github.getUserRepos('octocat', {
-    type: 'owner',
-    sort: 'updated',
-    per_page: 50,
-  })
-);
-// → https://api.github.com/users/octocat/repos?type=owner&sort=updated&per_page=50
-
-console.log(github.getCommit('facebook', 'react', 'abc123'));
-// → https://api.github.com/repos/facebook/react/commits/abc123
-
-console.log(
-  github.searchRepos('fast-url language:typescript', {
-    sort: 'stars',
-    order: 'desc',
-  })
-);
-// → https://api.github.com/search/repositories?q=fast-url%20language%3Atypescript&sort=stars&order=desc
-```
-
-### Dynamic Route Building
-
-```typescript
-import { createUrl } from 'fast-url';
-
-// Route configuration
-const routes = {
-  home: '/',
-  userProfile: '/users/:userId',
-  userPosts: '/users/:userId/posts',
-  post: '/posts/:postId',
-  search: '/search',
+const api = {
+  '/users/:id': { /* ... */ },
+  '/posts': { /* ... */ }
 };
 
-// Helper to build routes
-function route(name: keyof typeof routes, params: Record<string, any> = {}) {
-  return createUrl('https://myblog.com', routes[name], params);
-}
-
-console.log(route('home'));
-// → https://myblog.com/
-
-console.log(route('userProfile', { userId: 123 }));
-// → https://myblog.com/users/123
-
-console.log(route('userPosts', { userId: 123, page: 2 }));
-// → https://myblog.com/users/123/posts?page=2
-
-console.log(route('search', { q: 'typescript', tag: 'tutorial' }));
-// → https://myblog.com/search?q=typescript&tag=tutorial
+type Path = ApiPath<typeof api>;
+// Path = '/users/:id' | '/posts'
 ```
 
-### Pagination Helper
+### `FetchOptions<T, Path>`
+
+Extract the required fetch options for a specific API path.
 
 ```typescript
-import { createUrl } from 'fast-url';
-
-function buildPaginatedUrl(
-  baseUrl: string,
-  path: string,
-  page: number,
-  pageSize: number,
-  filters: Record<string, any> = {}
-) {
-  return createUrl(baseUrl, path, {
-    ...filters,
-    page,
-    per_page: pageSize,
-    offset: (page - 1) * pageSize,
-  });
-}
-
-console.log(
-  buildPaginatedUrl('https://api.example.com', '/products', 3, 20, {
-    category: 'electronics',
-    sort: 'price',
-  })
-);
-// → https://api.example.com/products?category=electronics&sort=price&page=3&per_page=20&offset=40
+type FetchOptions<T extends ApiSchema, Path extends ApiPath<T>> = 
+  // Infers correct types for params, query, and body
 ```
 
-## Performance Notes
+Automatically infers the correct types for params, query, and body based on the schema definition for the given path.
 
-fast-url is optimized for performance:
+**Example:**
 
-- **Query string encoding**: Matches Node.js performance with optimized implementations
-- **Direct constant access**: Better V8 JIT optimization
-- **Minimal allocations**: Efficient memory usage
-- **Zero dependencies**: Only relies on fast-querystring
+```typescript
+const api = {
+  '/users/:id': {
+    params: z.object({ id: z.number() }),
+    query: z.object({ fields: z.string().optional() })
+  }
+};
 
-<Callout title="Benchmarks" type="success">
-  In performance benchmarks, fast-url achieves 5-20% better performance than the
-  original urlcat implementation in many scenarios while maintaining full
-  compatibility.
-</Callout>
+type Options = FetchOptions<typeof api, '/users/:id'>;
+// Options = { params: { id: number }, query?: { fields?: string } }
+```
 
-## Browser and Node.js Compatibility
+### `ApiResponse<T, Path>`
 
-fast-url works in all modern JavaScript environments:
+Extract the response type for a specific API path.
 
-- ✅ Node.js 14+
+```typescript
+type ApiResponse<T extends ApiSchema, Path extends ApiPath<T>> =
+  // Infers response type from schema
+```
+
+Infers the correct return type based on the response schema definition.
+
+**Example:**
+
+```typescript
+const api = {
+  '/users/:id': {
+    response: z.object({ id: z.number(), name: z.string() })
+  }
+};
+
+type Response = ApiResponse<typeof api, '/users/:id'>;
+// Response = { id: number; name: string }
+```
+
+---
+
+## Request Examples
+
+### GET Request with Path Parameters
+
+```typescript
+const api = {
+  '/users/:id': {
+    params: z.object({ id: z.number() }),
+    response: z.object({
+      id: z.number(),
+      name: z.string(),
+      email: z.string()
+    })
+  }
+};
+
+const apiFetch = createFetch(api, 'https://api.example.com');
+
+const user = await apiFetch('/users/:id', {
+  params: { id: 123 }
+});
+// GET https://api.example.com/users/123
+```
+
+### GET Request with Query Parameters
+
+```typescript
+const api = {
+  '/users': {
+    query: z.object({
+      limit: z.number().optional(),
+      offset: z.number().optional(),
+      sort: z.string().optional()
+    }),
+    response: z.array(z.object({
+      id: z.number(),
+      name: z.string()
+    }))
+  }
+};
+
+const apiFetch = createFetch(api, 'https://api.example.com');
+
+const users = await apiFetch('/users', {
+  query: { limit: 10, offset: 0, sort: 'name' }
+});
+// GET https://api.example.com/users?limit=10&offset=0&sort=name
+```
+
+### GET Request with Both Path and Query Parameters
+
+```typescript
+const api = {
+  '/users/:id/posts': {
+    params: z.object({ id: z.number() }),
+    query: z.object({
+      limit: z.number().optional(),
+      published: z.boolean().optional()
+    }),
+    response: z.array(z.object({
+      id: z.number(),
+      title: z.string()
+    }))
+  }
+};
+
+const apiFetch = createFetch(api, 'https://api.example.com');
+
+const posts = await apiFetch('/users/:id/posts', {
+  params: { id: 123 },
+  query: { limit: 10, published: true }
+});
+// GET https://api.example.com/users/123/posts?limit=10&published=true
+```
+
+### POST Request with Body
+
+```typescript
+const api = {
+  '/users': {
+    body: z.object({
+      name: z.string(),
+      email: z.string().email()
+    }),
+    response: z.object({
+      id: z.number(),
+      name: z.string(),
+      email: z.string()
+    })
+  }
+};
+
+const apiFetch = createFetch(api, 'https://api.example.com');
+
+const newUser = await apiFetch('/users', {
+  body: {
+    name: 'John Doe',
+    email: 'john@example.com'
+  }
+});
+// POST https://api.example.com/users
+// Content-Type: application/json
+// Body: {"name":"John Doe","email":"john@example.com"}
+```
+
+### Custom Headers and Options
+
+```typescript
+const api = {
+  '/users/:id': {
+    params: z.object({ id: z.number() }),
+    response: z.object({ id: z.number(), name: z.string() })
+  }
+};
+
+const apiFetch = createFetch(api, 'https://api.example.com');
+
+const user = await apiFetch(
+  '/users/:id',
+  { params: { id: 123 } },
+  {
+    headers: {
+      'Authorization': 'Bearer token',
+      'X-Custom-Header': 'value'
+    },
+    cache: 'no-cache',
+    signal: abortController.signal
+  }
+);
+```
+
+---
+
+## Advanced Usage
+
+### Multiple Endpoints with Shared Schemas
+
+```typescript
+import { createFetch } from 'afetch';
+import { z } from 'zod';
+
+// Define reusable schemas
+const UserSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  email: z.string()
+});
+
+const PostSchema = z.object({
+  id: z.number(),
+  title: z.string(),
+  content: z.string(),
+  authorId: z.number()
+});
+
+// Use schemas in multiple endpoints
+const api = {
+  '/users/:id': {
+    params: z.object({ id: z.number() }),
+    response: UserSchema
+  },
+  '/users': {
+    response: z.array(UserSchema)
+  },
+  '/posts/:id': {
+    params: z.object({ id: z.number() }),
+    response: PostSchema
+  },
+  '/users/:id/posts': {
+    params: z.object({ id: z.number() }),
+    response: z.array(PostSchema)
+  }
+};
+
+const apiFetch = createFetch(api, 'https://api.example.com');
+```
+
+### Building a Complete API Client
+
+```typescript
+import { createFetch } from 'afetch';
+import { z } from 'zod';
+
+// Define comprehensive API schema
+const api = {
+  '/users': {
+    query: z.object({
+      page: z.number().optional(),
+      limit: z.number().optional()
+    }),
+    response: z.object({
+      users: z.array(z.object({
+        id: z.number(),
+        name: z.string()
+      })),
+      total: z.number()
+    })
+  },
+  '/users/:id': {
+    params: z.object({ id: z.number() }),
+    response: z.object({
+      id: z.number(),
+      name: z.string(),
+      email: z.string(),
+      createdAt: z.string()
+    })
+  },
+  '/users': {
+    body: z.object({
+      name: z.string().min(3),
+      email: z.string().email(),
+      password: z.string().min(8)
+    }),
+    response: z.object({
+      id: z.number(),
+      name: z.string(),
+      email: z.string()
+    })
+  },
+  '/users/:id': {
+    body: z.object({
+      name: z.string().min(3).optional(),
+      email: z.string().email().optional()
+    }),
+    response: z.object({
+      id: z.number(),
+      name: z.string(),
+      email: z.string()
+    })
+  }
+} as const;
+
+// Create client
+class APIClient {
+  private fetch;
+
+  constructor(baseUrl: string, apiKey: string) {
+    this.fetch = createFetch(api, baseUrl);
+    this.apiKey = apiKey;
+  }
+
+  async getUsers(page = 1, limit = 10) {
+    return this.fetch(
+      '/users',
+      { query: { page, limit } },
+      { headers: { 'Authorization': `Bearer ${this.apiKey}` } }
+    );
+  }
+
+  async getUser(id: number) {
+    return this.fetch(
+      '/users/:id',
+      { params: { id } },
+      { headers: { 'Authorization': `Bearer ${this.apiKey}` } }
+    );
+  }
+
+  async createUser(data: { name: string; email: string; password: string }) {
+    return this.fetch(
+      '/users',
+      { body: data },
+      { headers: { 'Authorization': `Bearer ${this.apiKey}` } }
+    );
+  }
+
+  async updateUser(id: number, data: { name?: string; email?: string }) {
+    return this.fetch(
+      '/users/:id',
+      { body: data },
+      { headers: { 'Authorization': `Bearer ${this.apiKey}` } }
+    );
+  }
+}
+
+// Usage
+const client = new APIClient('https://api.example.com', 'your-api-key');
+const users = await client.getUsers(1, 20);
+const user = await client.getUser(123);
+```
+
+---
+
+## Standard Schema Support
+
+afetch works with any schema library that implements [Standard Schema](https://standardschema.dev/):
+
+### Zod
+
+```typescript
+import { z } from 'zod';
+
+const api = {
+  '/users/:id': {
+    params: z.object({ id: z.number() }),
+    response: z.object({ id: z.number(), name: z.string() })
+  }
+};
+```
+
+### Valibot
+
+```typescript
+import * as v from 'valibot';
+
+const api = {
+  '/users/:id': {
+    params: v.object({ id: v.number() }),
+    response: v.object({ id: v.number(), name: v.string() })
+  }
+};
+```
+
+### ArkType
+
+```typescript
+import { type } from 'arktype';
+
+const api = {
+  '/users/:id': {
+    params: type({ id: 'number' }),
+    response: type({ id: 'number', name: 'string' })
+  }
+};
+```
+
+---
+
+## Error Handling
+
+### HTTP Errors
+
+afetch automatically throws an error for non-2xx status codes:
+
+```typescript
+try {
+  const user = await apiFetch('/users/:id', { params: { id: 999 } });
+} catch (error) {
+  console.error('HTTP error:', error.message);
+  // → "HTTP error! status: 404"
+}
+```
+
+### Validation Errors
+
+Schema validation errors are thrown when response doesn't match the schema:
+
+```typescript
+const api = {
+  '/users/:id': {
+    params: z.object({ id: z.number() }),
+    response: z.object({
+      id: z.number(),
+      name: z.string() // Required field
+    })
+  }
+};
+
+try {
+  // If server returns { id: 123 } without name field
+  const user = await apiFetch('/users/:id', { params: { id: 123 } });
+} catch (error) {
+  console.error('Validation error:', error);
+  // Schema validation failed
+}
+```
+
+---
+
+## TypeScript Features
+
+### Full Type Inference
+
+```typescript
+const api = {
+  '/users/:id': {
+    params: z.object({ id: z.number() }),
+    response: z.object({ id: z.number(), name: z.string() })
+  }
+} as const;
+
+const apiFetch = createFetch(api, 'https://api.example.com');
+
+// TypeScript infers everything:
+const user = await apiFetch('/users/:id', {
+  params: { id: 123 } // TypeScript knows params is required and id must be number
+});
+// TypeScript knows user is { id: number; name: string }
+```
+
+### Autocomplete Support
+
+When using afetch in TypeScript, you get full autocomplete for:
+
+- Available API paths
+- Required options (params, query, body)
+- Field names and types
+- Response properties
+
+### Compile-Time Validation
+
+```typescript
+// ✅ This compiles
+await apiFetch('/users/:id', { params: { id: 123 } });
+
+// ❌ TypeScript error: Property 'params' is missing
+await apiFetch('/users/:id', {});
+
+// ❌ TypeScript error: Type 'string' is not assignable to type 'number'
+await apiFetch('/users/:id', { params: { id: '123' } });
+
+// ❌ TypeScript error: '/invalid' is not assignable to type '/users/:id' | ...
+await apiFetch('/invalid', {});
+```
+
+---
+
+## Performance Considerations
+
+afetch is designed to be performant:
+
+- **Small bundle size**: Minimal dependencies (only fast-url and Standard Schema spec)
+- **Efficient URL building**: Leverages fast-url's optimized implementation
+- **Type-level computation**: Most type checking happens at compile time
+- **Runtime validation**: Only validates responses, not TypeScript types
+
+### Bundle Size
+
+afetch adds minimal overhead to your bundle:
+
+- Core library: ~2KB minified + gzipped
+- Plus your choice of schema library (Zod, Valibot, etc.)
+
+---
+
+## Browser and Runtime Compatibility
+
+afetch works in all modern JavaScript environments:
+
+- ✅ Node.js 18+
 - ✅ Bun
 - ✅ Deno
 - ✅ Modern browsers (Chrome, Firefox, Safari, Edge)
 - ✅ React Native
 - ✅ Electron
+
+**Requirements:**
+
+- `fetch` API support (built-in in modern environments)
+- Standard Schema-compatible validation library

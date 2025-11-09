@@ -1,203 +1,221 @@
 ---
 title: Introduction
-description: Learn about fast-url – a high-performance URL building library that makes constructing URLs safe and convenient
+description: Learn about afetch – a type-safe API client with schema validation using Standard Schema
 ---
 
-import { Feather, ShieldCheck, Lock, Globe, Wrench, Zap } from 'lucide-react';
+import { Feather, ShieldCheck, Lock, Code, Wrench, Zap } from 'lucide-react';
 
-**fast-url** is a lightweight, high-performance JavaScript/TypeScript library for building URLs safely and conveniently. It's a modern fork of [urlcat](https://github.com/balazsbotond/urlcat) with a strong focus on performance optimization and code simplicity.
+**afetch** is a type-safe API client library that integrates schema validation with fetch requests, leveraging the Standard Schema specification for maximum flexibility and type safety.
 
-<Callout title="Why fast-url?" type="info">
-  Building URLs manually is error-prone and tedious. fast-url handles parameter
-  escaping, proper URL segment joining, and clean separation of path and query
-  parameters automatically.
+<Callout title="Why afetch?" type="info">
+  Building API clients manually is error-prone and lacks type safety. afetch
+  handles type-safe URL construction, automatic request/response validation,
+  and full TypeScript inference automatically.
 </Callout>
 
-## Why This Fork Was Created
+## Why afetch?
 
-The original [urlcat](https://github.com/balazsbotond/urlcat) library is a solid foundation for URL building, but over time it has faced several challenges:
+Building API clients manually is tedious and error-prone. afetch solves common problems developers face when working with APIs:
 
-### Problems with the Original Project
+### Problems with Manual API Clients
 
-- **🐌 Performance bottlenecks**: The original implementation wasn't optimized for high-throughput scenarios
-- **📦 Outdated dependencies**: Not regularly updated with the latest Node.js optimizations
-- **🔧 Maintenance gaps**: Infrequent updates and slower adoption of modern JavaScript features
-- **⚡ Query string encoding**: Used older, less efficient encoding methods
+- **🔴 No type safety**: Response types are unknown, leading to runtime errors
+- **🔴 Manual validation**: You need to write validation code for every endpoint
+- **🔴 Schema duplication**: Types and validation logic are often duplicated
+- **🔴 URL building errors**: String concatenation leads to malformed URLs
+- **🔴 Poor developer experience**: No autocomplete, no compile-time checks
 
-### How fast-url Addresses These Issues
+### How afetch Solves These Issues
 
-**fast-url** was created to solve these problems while maintaining compatibility:
+**afetch** provides a complete solution for type-safe API clients:
 
-1. **Performance-first approach**:
+1. **End-to-end type safety**:
 
-   - Optimized query string encoding matching Node.js performance
-   - Reduced function call overhead
-   - Direct constant access for better V8 JIT optimization
-   - 5-20% faster than previous implementations in many scenarios
+   - Full TypeScript inference from schema to response
+   - Compile-time validation of requests
+   - Autocomplete for all API endpoints and parameters
+   - Type-safe path and query parameters
 
-2. **Regular maintenance**:
+2. **Schema validation**:
 
-   - Active development and quick bug fixes
-   - Regular dependency updates
-   - Modern TypeScript implementation
+   - Built-in support for Standard Schema specification
+   - Works with Zod, Valibot, ArkType, and more
+   - Automatic request/response validation
+   - Single source of truth for types and validation
 
-3. **Simplified codebase**:
+3. **Clean API**:
 
-   - Minimal dependencies (only fast-querystring)
-   - Clean, maintainable code
-   - Focus on core functionality
+   - Simple, intuitive interface
+   - Integrated with fast-url for clean URL construction
+   - Minimal boilerplate code
+   - Focus on developer experience
 
 4. **Production-ready**:
    - Comprehensive test coverage
+   - Small bundle size
    - Battle-tested in real-world applications
-   - Performance benchmarks with CodSpeed integration
+   - Regular updates and maintenance
 
 ## Key Features
 
 <Cards>
-  <Card title="Lightweight" icon={<Feather />}>
-    Only one dependency (fast-querystring) with minimal bundle size - perfect
-    for performance-critical applications
+  <Card title="Type-Safe" icon={<ShieldCheck />}>
+    Full TypeScript support with end-to-end type inference from schema
+    definition to response data
   </Card>
-  <Card title="Type Safe" icon={<ShieldCheck />}>
-    Written in TypeScript with full type definitions for better development
-    experience and compile-time safety
-  </Card>
-  <Card title="URL Safe" icon={<Lock />}>
-    Automatically escapes parameters and handles edge cases - no more broken
-    URLs from special characters
-  </Card>
-  <Card title="Unicode-aware" icon={<Globe />}>
-    Uses `codePointAt` for proper Unicode handling, including graceful encoding
-    of lone surrogates and emojis
+  <Card title="Schema Validation" icon={<Lock />}>
+    Built-in support for Standard Schema - compatible with Zod, Valibot,
+    ArkType, and more
   </Card>
   <Card title="Flexible" icon={<Wrench />}>
-    Multiple ways to build URLs for different use cases - from simple
-    concatenation to complex path and query parameters
+    Works with any schema library that implements Standard Schema for maximum
+    flexibility
   </Card>
-  <Card title="High Performance" icon={<Zap />}>
-    Optimized for speed with benchmarks showing significant improvements over
-    the original implementation
+  <Card title="Minimal" icon={<Feather />}>
+    Small bundle size with minimal dependencies - only fast-url and Standard
+    Schema spec
+  </Card>
+  <Card title="URL Building" icon={<Code />}>
+    Integrated with fast-url for clean, safe URL construction with path and
+    query parameters
+  </Card>
+  <Card title="Developer Experience" icon={<Zap />}>
+    Excellent developer experience with full autocomplete and compile-time error
+    checking
   </Card>
 </Cards>
 
 ## The Problem
 
-Building URLs manually is error-prone and difficult to maintain:
+Building API clients manually lacks type safety and validation:
 
-```javascript
-// ❌ Error-prone manual approach
-const url = `${baseUrl}/users/${id}/posts?limit=${limit}&offset=${offset}`;
-
-await fetch(url);
+```typescript
+// ❌ No type safety, manual validation
+const response = await fetch(`${baseUrl}/users/${id}?fields=${fields}`);
+const data = await response.json();
+// What type is data? Who knows! Runtime errors waiting to happen
 ```
 
-**Issues with manual URL building:**
+**Issues with manual API clients:**
 
-- 🔴 Double slashes when joining paths
-- 🔴 Unescaped parameters breaking URLs
-- 🔴 Complex string concatenation logic
-- 🔴 No validation of parameter types
-- 🔴 Difficult to maintain and read
+- 🔴 No type safety for request parameters
+- 🔴 Unknown response types
+- 🔴 Manual validation required
+- 🔴 Schema and types are duplicated
+- 🔴 Difficult to maintain and refactor
 
 ## The Solution
 
-fast-url provides a clean, safe API for URL construction:
+afetch provides a type-safe API client with automatic validation:
 
-```javascript
-// ✅ Clean and safe with fast-url
-import { createUrl } from 'fast-url';
+```typescript
+// ✅ Type-safe with validation
+import { createFetch } from 'afetch';
+import { z } from 'zod';
 
-const url = createUrl(baseUrl, '/users/:id/posts', { id, limit, offset });
+const api = {
+  '/users/:id': {
+    params: z.object({ id: z.number() }),
+    query: z.object({ fields: z.string().optional() }),
+    response: z.object({ id: z.number(), name: z.string(), email: z.string() })
+  }
+};
 
-await fetch(url);
+const apiFetch = createFetch(api, baseUrl);
+const user = await apiFetch('/users/:id', {
+  params: { id },
+  query: { fields }
+});
+// user is fully typed as { id: number; name: string; email: string }
 ```
 
 **Benefits:**
 
-- ✅ Automatic parameter escaping
-- ✅ Proper URL segment joining
-- ✅ Clean separation of path and query parameters
-- ✅ Type checking for path parameters
+- ✅ Full end-to-end type safety
+- ✅ Automatic request/response validation
+- ✅ Single source of truth for types and validation
+- ✅ Clean separation of concerns
 - ✅ Easy to read and maintain
 
-<Callout title="Performance Matters" type="success">
-  In performance benchmarks, fast-url matches or exceeds the original urlcat
-  implementation while providing additional safety features and better Unicode
-  handling.
+<Callout title="Type Safety & Validation" type="success">
+  afetch handles type-safe URL construction, automatic validation, and full
+  TypeScript inference - catching errors at compile time instead of runtime.
 </Callout>
 
-## Visual Example
 
-Here's a visual representation of how fast-url simplifies URL building:
 
-<div role="img" aria-label="Basic usage example showing how fast-url builds URLs">
-  <img src="/urlcat-basic-usage.svg" alt="Basic usage example showing how fast-url builds URLs" className="block dark:hidden" aria-hidden="true" />
-  <img src="/urlcat-basic-usage-dark.svg" alt="Basic usage example showing how fast-url builds URLs" className="hidden dark:block" aria-hidden="true" />
-</div>
+## When to Use afetch
 
-## When to Use fast-url
+afetch is ideal for:
 
-fast-url is ideal for:
-
-- 🌐 **REST API clients**: Building dynamic API endpoints
-- 🔗 **URL generators**: Creating shareable links with query parameters
-- 📱 **Single-page applications**: Managing client-side routing and navigation
-- 🛠️ **Backend services**: Constructing URLs for external API calls
-- 📊 **Analytics tracking**: Building tracking URLs with parameters
+- 🌐 **REST API clients**: Building type-safe wrappers around REST APIs
+- 🔗 **Microservices**: Creating typed clients for service-to-service communication
+- 📱 **Frontend applications**: Type-safe data fetching with validation
+- 🛠️ **Backend services**: Calling external APIs with full type safety
+- 📊 **SDK development**: Building SDKs with excellent developer experience
 
 ## Quick Example
 
-Here's a real-world example showing how fast-url simplifies URL building:
+Here's a real-world example showing how afetch simplifies API client development:
 
-<Tabs items={['API Client', 'Manual Approach']}>
-  <Tab value="API Client">
+<Tabs items={['With afetch', 'Without afetch']}>
+  <Tab value="With afetch">
     ```typescript
-    import { createUrl } from 'fast-url';
+    import { createFetch } from 'afetch';
+    import { z } from 'zod';
     
-    class UserAPI {
-      private baseUrl = 'https://api.example.com';
-      
-      getUserPosts(userId: number, page = 1, limit = 10) {
-        return fetch(
-          createUrl(this.baseUrl, '/users/:userId/posts', {
-            userId,
-            page,
-            limit,
-            sort: 'created_at'
-          })
-        );
+    // Define API schema once
+    const api = {
+      '/users/:id': {
+        params: z.object({ id: z.number() }),
+        query: z.object({ fields: z.string().optional() }),
+        response: z.object({
+          id: z.number(),
+          name: z.string(),
+          email: z.string()
+        })
       }
-    }
+    };
     
-    // Generated URL: 
-    // https://api.example.com/users/42/posts?page=1&limit=10&sort=created_at
+    const apiFetch = createFetch(api, 'https://api.example.com');
+    
+    // Type-safe request with validation
+    const user = await apiFetch('/users/:id', {
+      params: { id: 123 },
+      query: { fields: 'name,email' }
+    });
+    // user is typed as { id: number; name: string; email: string }
     ```
   </Tab>
-  <Tab value="Manual Approach">
+  <Tab value="Without afetch">
     ```typescript
-    class UserAPI {
-      private baseUrl = 'https://api.example.com';
-      
-      getUserPosts(userId: number, page = 1, limit = 10) {
-        // Remove trailing slash from baseUrl if present
-        const base = this.baseUrl.endsWith('/') 
-          ? this.baseUrl.slice(0, -1) 
-          : this.baseUrl;
-        
-        // Build path with encoded userId
-        const path = `/users/${encodeURIComponent(userId)}/posts`;
-        
-        // Build query string
-        const params = new URLSearchParams({
-          page: String(page),
-          limit: String(limit),
-          sort: 'created_at'
-        });
-        
-        return fetch(`${base}${path}?${params.toString()}`);
-      }
+    // Define types manually
+    interface User {
+      id: number;
+      name: string;
+      email: string;
     }
+    
+    // Build URL manually
+    const url = `https://api.example.com/users/${id}?fields=${fields}`;
+    
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    // Manual validation required
+    if (typeof data.id !== 'number' || 
+        typeof data.name !== 'string' || 
+        typeof data.email !== 'string') {
+      throw new Error('Invalid response');
+    }
+    
+    const user: User = data;
+    // No compile-time guarantees that data matches User type
     ```
   </Tab>
 </Tabs>
