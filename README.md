@@ -1,14 +1,14 @@
-# afetch
+# what-the-fetch!
 
 Type-safe API client with schema validation using Standard Schema.
 
-[![Test](https://github.com/hckhanh/afetch/actions/workflows/test.yml/badge.svg)](https://github.com/hckhanh/afetch/actions/workflows/test.yml)
-[![codecov](https://codecov.io/github/hckhanh/afetch/graph/badge.svg?token=6W7S96H6OT)](https://codecov.io/github/hckhanh/afetch)
+[![Test](https://github.com/hckhanh/what-the-fetch/actions/workflows/test.yml/badge.svg)](https://github.com/hckhanh/what-the-fetch/actions/workflows/test.yml)
+[![codecov](https://codecov.io/github/hckhanh/what-the-fetch/graph/badge.svg?token=6W7S96H6OT)](https://codecov.io/github/hckhanh/what-the-fetch)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=hckhanh_what-the-fetch&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=hckhanh_what-the-fetch)
-[![Bundle Size](https://badgen.net/bundlephobia/minzip/afetch)](https://bundlephobia.com/result?p=afetch)
+[![Bundle Size](https://badgen.net/bundlephobia/minzip/what-the-fetch)](https://bundlephobia.com/result?p=what-the-fetch)
 [![CodSpeed Badge](https://img.shields.io/endpoint?url=https://codspeed.io/badge.json)](https://codspeed.io/hckhanh/what-the-fetch?utm_source=badge)
 
-afetch is a type-safe API client library that integrates schema validation with fetch requests, leveraging the Standard Schema specification for maximum flexibility and type safety.
+what-the-fetch is a type-safe API client library that integrates schema validation with fetch requests, leveraging the Standard Schema specification for maximum flexibility and type safety.
 
 ## Features
 
@@ -22,13 +22,13 @@ afetch is a type-safe API client library that integrates schema validation with 
 
 ```bash
 # Using npm
-npm install afetch
+npm install what-the-fetch
 
 # Using bun
-bun add afetch
+bun add what-the-fetch
 
 # Using JSR (recommended for Deno)
-deno add jsr:@hckhanh/afetch
+deno add jsr:@hckhanh/what-the-fetch
 ```
 
 ## Usage
@@ -36,7 +36,7 @@ deno add jsr:@hckhanh/afetch
 ### Basic Example
 
 ```typescript
-import { createFetch } from 'afetch';
+import { createFetch } from 'what-the-fetch';
 import { z } from 'zod';
 
 // Define your API schema
@@ -150,7 +150,7 @@ Each path in your schema can have:
 
 All schemas must implement the Standard Schema specification.
 
-## Why afetch?
+## Why what-the-fetch?
 
 Building API clients manually is error-prone and lacks type safety:
 
@@ -170,7 +170,7 @@ const user = await apiFetch('/users/:id', {
 // user is fully typed and validated!
 ```
 
-afetch handles:
+what-the-fetch handles:
 
 - Type-safe URL construction with path and query parameters
 - Automatic request/response validation
@@ -179,7 +179,7 @@ afetch handles:
 
 ## Standard Schema Support
 
-afetch works with any schema library that implements [Standard Schema](https://standardschema.dev/):
+what-the-fetch works with any schema library that implements [Standard Schema](https://standardschema.dev/):
 
 - [Zod](https://zod.dev/)
 - [Valibot](https://valibot.dev/)
