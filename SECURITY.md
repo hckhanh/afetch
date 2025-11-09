@@ -6,12 +6,12 @@ We release patches for security vulnerabilities. Currently supported versions:
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 4.x.x   | :white_check_mark: |
-| < 4.0   | :x:                |
+| 1.x.x   | :white_check_mark: |
+| < 1.0   | :x:                |
 
 ## Reporting a Vulnerability
 
-We take the security of fast-url seriously. If you believe you have found a security vulnerability, please report it to us as described below.
+We take the security of what-the-fetch seriously. If you believe you have found a security vulnerability, please report it to us as described below.
 
 ### Please do NOT:
 
@@ -41,22 +41,23 @@ Please include the following information in your report:
 
 ## Security Best Practices
 
-When using fast-url in your applications:
+When using what-the-fetch in your applications:
 
-1. **Keep Dependencies Updated**: Regularly update to the latest version of fast-url to receive security patches
-2. **Input Validation**: While fast-url handles URL encoding automatically, always validate user input before passing it to URL building functions
+1. **Keep Dependencies Updated**: Regularly update to the latest version of what-the-fetch to receive security patches
+2. **Input Validation**: Always validate user input before passing it to API calls, even with schema validation enabled
 3. **Use TypeScript**: Take advantage of TypeScript's type safety to catch potential issues at compile time
-4. **Review URLs**: In security-sensitive contexts, review generated URLs before using them in production
+4. **Schema Validation**: Ensure your schemas properly validate all response data to prevent unexpected data from being processed
 
 ## Scope
 
 The following are considered in scope for security reports:
 
+- Schema validation bypass vulnerabilities
+- Type safety violations
 - URL injection vulnerabilities
-- Parameter encoding bypass
-- XSS vectors through URL construction
-- Path traversal vulnerabilities
-- Any behavior that could lead to security issues in applications using fast-url
+- XSS vectors through API responses
+- Data leakage through improper validation
+- Any behavior that could lead to security issues in applications using what-the-fetch
 
 ## Out of Scope
 
@@ -81,4 +82,4 @@ For any questions about this security policy, please contact: hi@khanh.id
 
 ## Learn More
 
-For general bugs and feature requests, please use our [GitHub Issues](https://github.com/hckhanh/fast-url/issues).
+For general bugs and feature requests, please use our [GitHub Issues](https://github.com/hckhanh/what-the-fetch/issues).
