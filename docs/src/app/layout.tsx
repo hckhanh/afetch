@@ -6,8 +6,7 @@ import { inter, jetbrainsMono } from '@/lib/fonts'
 
 export const metadata: Metadata = {
   title: {
-    default:
-      'afetch - Type-Safe API Client with Schema Validation',
+    default: 'afetch - Type-Safe API Client with Schema Validation',
     template: '%s | afetch',
   },
   description:
