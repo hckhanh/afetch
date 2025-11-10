@@ -45,8 +45,8 @@ export type { ApiPath, ApiResponse, ApiSchema, FetchOptions } from './types.ts'
  * @template Schema - The API schema definition mapping paths to their schemas
  * @param apis - An object mapping API paths to their schema definitions
  * @param baseUrl - The base URL for all API requests
- * @param sharedInit - Optional shared RequestInit options that will be merged with per-request options
- * @returns A typed fetch function that accepts path, optional options, and optional per-request RequestInit
+ * @param sharedInit - Optional shared {@link RequestInit} options that will be merged with per-request options
+ * @returns A typed fetch function that accepts path, optional options, and optional per-request {@link RequestInit}
  *
  * @example
  * ```typescript
