@@ -125,11 +125,7 @@ describe('validateRequestData', () => {
 
     const result = await validateRequestData(apiSchema, '/users/:id', options)
 
-    expect(result).toEqual({
-      params: { id: 123 },
-      query: { limit: 10 },
-      body: { name: 'John' },
-    })
+    expect(result).toEqual([{ id: 123 }, { limit: 10 }, { name: 'John' }])
   })
 
   it('should handle undefined options', async () => {
@@ -139,11 +135,7 @@ describe('validateRequestData', () => {
 
     const result = await validateRequestData(apiSchema, '/users', undefined)
 
-    expect(result).toEqual({
-      params: undefined,
-      query: undefined,
-      body: undefined,
-    })
+    expect(result).toEqual([undefined, undefined, undefined])
   })
 
   it('should handle partial options', async () => {
@@ -157,11 +149,7 @@ describe('validateRequestData', () => {
 
     const result = await validateRequestData(apiSchema, '/users/:id', options)
 
-    expect(result).toEqual({
-      params: { id: 123 },
-      query: undefined,
-      body: undefined,
-    })
+    expect(result).toEqual([{ id: 123 }, undefined, undefined])
   })
 
   it('should throw error when parameterized path lacks params schema', async () => {
@@ -197,11 +185,7 @@ describe('validateRequestData', () => {
 
     const result = await validateRequestData(apiSchema, '/users', undefined)
 
-    expect(result).toEqual({
-      params: undefined,
-      query: undefined,
-      body: undefined,
-    })
+    expect(result).toEqual([undefined, undefined, undefined])
   })
 
   it('should validate parameterized path with params schema', async () => {
@@ -214,7 +198,7 @@ describe('validateRequestData', () => {
       params: { id: 123 },
     })
 
-    expect(result.params).toEqual({ id: 123 })
+    expect(result[0]).toEqual({ id: 123 })
   })
 
   it('should throw validation error for invalid params', async () => {
