@@ -87,7 +87,7 @@ export function createFetch<Schema extends ApiSchema>(
   init?: RequestInit,
 ) => Promise<ApiData<Schema, Path, 'response'>> {
   return async (path, options, init?: RequestInit) => {
-    const { params, query, body } = await validateRequestData(
+    const [params, query, body] = await validateRequestData(
       apis[path],
       path,
       options,
@@ -109,7 +109,10 @@ export function createFetch<Schema extends ApiSchema>(
     }
 
     // Build URL with params and query
-    const url = createUrl(baseUrl, path, { ...params, ...query })
+    const url = createUrl(baseUrl, path, {
+      ...(params as Record<string, unknown> | undefined),
+      ...(query as Record<string, unknown> | undefined),
+    })
 
     // Make request
     const response = await fetch(url, requestInit)

@@ -14,7 +14,7 @@ import type { ApiData, ApiPath, ApiSchema } from './types.ts'
  * and validates the provided data against it. If validation fails, throws an error with the
  * validation issues.
  *
- * @template Schema - The API schema type
+ * @template Schemas - The API schema type
  * @template Path - The specific API path
  * @param apiSchema - The complete schema object for a specific API path
  * @param option - The key of the schema to validate against (e.g., 'response', 'params', 'query', 'body')
@@ -25,20 +25,20 @@ import type { ApiData, ApiPath, ApiSchema } from './types.ts'
  * @internal
  */
 export async function validateData<
-  Schema extends ApiSchema,
-  Path extends ApiPath<Schema>,
-  Option extends keyof Schema[Path],
+  Schemas extends ApiSchema,
+  Path extends ApiPath<Schemas>,
+  Option extends keyof Schemas[Path],
 >(
-  apiSchema: Schema[Path],
-  option: keyof Schema[Path],
+  apiSchema: Schemas[Path],
+  option: keyof Schemas[Path],
   data: unknown,
-): Promise<ApiData<Schema, Path, Option>> {
+): Promise<ApiData<Schemas, Path, Option>> {
   const schema = apiSchema[option] as
     | StandardSchemaV1<Record<string, unknown>>
     | undefined
 
   if (!schema) {
-    return data as ApiData<Schema, Path, Option>
+    return data as ApiData<Schemas, Path, Option>
   }
 
   const result = await schema['~standard'].validate(data)
@@ -47,7 +47,7 @@ export async function validateData<
     throw new Error(`Validation failed: ${JSON.stringify(result.issues)}`)
   }
 
-  return result.value as ApiData<Schema, Path, Option>
+  return result.value as ApiData<Schemas, Path, Option>
 }
 
 const paramsRegex = /\/:\w+/
@@ -66,15 +66,9 @@ export async function validateRequestData<
     )
   }
 
-  const [params, query, body] = await Promise.all([
-    validateData(apiSchema, 'params', options?.params),
-    validateData(apiSchema, 'query', options?.query),
-    validateData(apiSchema, 'body', options?.body),
+  return Promise.all([
+    validateData<Schemas, Path, 'params'>(apiSchema, 'params', options?.params),
+    validateData<Schemas, Path, 'query'>(apiSchema, 'query', options?.query),
+    validateData<Schemas, Path, 'body'>(apiSchema, 'body', options?.body),
   ])
-
-  return { params, query, body } as {
-    params?: Record<string, unknown>
-    query?: Record<string, unknown>
-    body?: unknown
-  }
 }

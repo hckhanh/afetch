@@ -48,13 +48,13 @@ export type ApiPath<Schemas extends ApiSchema> = keyof Schemas & string
  * Automatically infers the correct types for params, query, and body based on
  * the schema definition for the given path.
  *
- * @template T - The API schema type
+ * @template Schemas - The API schema type
  * @template Path - The specific API path
  */
 export type FetchOptions<
-  T extends ApiSchema,
-  Path extends ApiPath<T>,
-> = T[Path] extends infer Schema
+  Schemas extends ApiSchema,
+  Path extends ApiPath<Schemas>,
+> = Schemas[Path] extends infer Schema
   ? Schema extends {
       params?: infer P
       query?: infer Q
@@ -91,5 +91,5 @@ export type ApiData<
     ? Schema extends StandardSchemaV1<infer Data>
       ? Data
       : unknown
-    : unknown
+    : undefined
   : unknown
