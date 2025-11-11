@@ -684,7 +684,7 @@ describe('createFetch', () => {
       )
     })
 
-    it('should handle path without method prefix (no method set)', async () => {
+    it('should handle path without method prefix (defaults to GET)', async () => {
       const api = {
         '/users': {
           response: createMockSchema({ users: [] }),
@@ -702,7 +702,7 @@ describe('createFetch', () => {
       expect(fetchMock).toHaveBeenCalledWith(
         'https://api.example.com/users',
         expect.objectContaining({
-          method: undefined,
+          method: 'GET',
         }),
       )
     })
@@ -731,16 +731,16 @@ describe('createFetch', () => {
       const apiFetch2 = createFetch(api2, 'https://api.example.com')
       await apiFetch2('/users')
 
-      // Both should call the same URL
+      // Both should call the same URL with GET method
       expect(fetchMock).toHaveBeenNthCalledWith(
         1,
         'https://api.example.com/users',
-        expect.anything(),
+        expect.objectContaining({ method: 'GET' }),
       )
       expect(fetchMock).toHaveBeenNthCalledWith(
         2,
         'https://api.example.com/users',
-        expect.anything(),
+        expect.objectContaining({ method: 'GET' }),
       )
     })
 
@@ -840,6 +840,57 @@ describe('createFetch', () => {
 
       expect(fetchMock).toHaveBeenCalledWith(
         'https://api.example.com/users',
+        expect.objectContaining({
+          method: 'GET',
+        }),
+      )
+    })
+
+    it('should default to POST when body is present without method prefix', async () => {
+      const api = {
+        '/users': {
+          body: createMockSchema({ name: 'John', email: 'john@example.com' }),
+          response: createMockSchema({ id: 1, name: 'John' }),
+        },
+      }
+
+      fetchMock.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ id: 1, name: 'John' }),
+      } as Response)
+
+      const apiFetch = createFetch(api, 'https://api.example.com')
+      await apiFetch('/users', {
+        body: { name: 'John', email: 'john@example.com' },
+      })
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        'https://api.example.com/users',
+        expect.objectContaining({
+          method: 'POST',
+          body: JSON.stringify({ name: 'John', email: 'john@example.com' }),
+        }),
+      )
+    })
+
+    it('should default to GET when no body and no method prefix', async () => {
+      const api = {
+        '/users': {
+          query: createMockSchema({ limit: 10 }),
+          response: createMockSchema({ users: [] }),
+        },
+      }
+
+      fetchMock.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ users: [] }),
+      } as Response)
+
+      const apiFetch = createFetch(api, 'https://api.example.com')
+      await apiFetch('/users', { query: { limit: 10 } })
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        'https://api.example.com/users?limit=10',
         expect.objectContaining({
           method: 'GET',
         }),
