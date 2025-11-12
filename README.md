@@ -1,6 +1,6 @@
 # what-the-fetch! [![NPM Downloads](https://img.shields.io/npm/dw/what-the-fetch)](https://www.npmjs.com/package/what-the-fetch) [![JSR](https://jsr.io/badges/@hckhanh/what-the-fetch/weekly-downloads)](https://jsr.io/@hckhanh/what-the-fetch)
 
-Type-safe API client with schema validation using Standard Schema.
+Type-safe API client with schema validation using [Standard Schema](https://standardschema.dev).
 
 [![Test](https://github.com/hckhanh/what-the-fetch/actions/workflows/test.yml/badge.svg)](https://github.com/hckhanh/what-the-fetch/actions/workflows/test.yml)
 [![codecov](https://codecov.io/github/hckhanh/what-the-fetch/graph/badge.svg?token=6W7S96H6OT)](https://codecov.io/github/hckhanh/what-the-fetch)
@@ -8,13 +8,13 @@ Type-safe API client with schema validation using Standard Schema.
 [![Bundle Size](https://badgen.net/bundlephobia/minzip/what-the-fetch)](https://bundlephobia.com/result?p=what-the-fetch)
 [![CodSpeed Badge](https://img.shields.io/endpoint?url=https://codspeed.io/badge.json)](https://codspeed.io/hckhanh/what-the-fetch?utm_source=badge)
 
-what-the-fetch is a type-safe API client library that integrates schema validation with fetch requests, leveraging the Standard Schema specification for maximum flexibility and type safety.
+what-the-fetch is a type-safe API client library that integrates schema validation with fetch requests, leveraging the [Standard Schema](https://standardschema.dev) specification for maximum flexibility and type safety.
 
 ## Features
 
 - **Type-safe**: Full TypeScript support with end-to-end type inference
-- **Schema validation**: Built-in support for Standard Schema (compatible with Zod, Valibot, ArkType, and more)
-- **Flexible**: Works with any schema library that implements Standard Schema
+- **Schema validation**: Built-in support for [Standard Schema](https://standardschema.dev) (compatible with Zod, Valibot, ArkType, and more)
+- **Flexible**: Works with any schema library that implements [Standard Schema](https://standardschema.dev)
 - **Minimal**: Small bundle size with minimal dependencies
 - **URL building**: Integrated with fast-url for clean URL construction
 
@@ -220,7 +220,7 @@ Each path in your schema can have:
 - `body`: Schema for request body (automatically sets method to POST)
 - `response`: Schema for response validation
 
-All schemas must implement the Standard Schema specification.
+All schemas must implement the [Standard Schema](https://standardschema.dev) specification.
 
 **Note:** If your path contains parameters (e.g., `/users/:id`), you must define a `params` schema. The library will throw an error at runtime if you attempt to use a parameterized path without a params schema.
 
