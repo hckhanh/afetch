@@ -404,21 +404,37 @@ const user = await apiFetch(
 
 ## HTTP Methods
 
-what-the-fetch supports explicit HTTP method specification using the `@method` prefix notation in your API paths. This gives you full control over which HTTP method is used for each endpoint.
+what-the-fetch automatically infers HTTP methods based on the presence of a request body. You can optionally use the `@method` prefix for explicit control or to specify methods other than GET and POST.
 
-### Method Prefix Syntax
+### Automatic Method Inference
 
-Use the `@method` prefix at the beginning of your path:
+By default, what-the-fetch infers the HTTP method:
+- Requests **with a body** → `POST`
+- Requests **without a body** → `GET`
 
 ```typescript
 const api = {
-  '@get/resource': { /* schema */ },
-  '@post/resource': { /* schema */ },
-  '@put/resource/:id': { /* schema */ },
-  '@patch/resource/:id': { /* schema */ },
-  '@delete/resource/:id': { /* schema */ }
+  '/users/:id': { /* Uses GET (no body) */ },
+  '/users': { body: z.object({...}), /* Uses POST (has body) */ }
 };
 ```
+
+### Method Prefix Syntax (Optional)
+
+For explicit control or to use other HTTP methods, add the `@method` prefix:
+
+```typescript
+const api = {
+  '@get/resource': { /* Explicit GET - same as /resource */ },
+  '/resource': { /* Implicit GET */ },
+  '@post/resource': { /* Explicit POST */ },
+  '@put/resource/:id': { /* PUT - prefix required */ },
+  '@patch/resource/:id': { /* PATCH - prefix required */ },
+  '@delete/resource/:id': { /* DELETE - prefix required */ }
+};
+```
+
+**Note:** `/users/:id` and `@get/users/:id` are completely equivalent and both result in a GET request.
 
 ### Supported HTTP Methods
 
@@ -524,17 +540,23 @@ await apiFetch('@delete/users/:id', { params: { id: 123 } });
 // DELETE https://api.example.com/users/123
 ```
 
-### Automatic Method Detection
+### Equivalence Examples
 
-If you don't use a method prefix, what-the-fetch automatically determines the HTTP method:
+The following path definitions are equivalent:
 
 ```typescript
 const api = {
-  // Without prefix - method is inferred
+  // These two are identical - both use GET
   '/users/:id': {
     params: z.object({ id: z.number() }),
     response: z.object({ id: z.number(), name: z.string() })
   },
+  '@get/users/:id': {  // Same as above - @get is optional
+    params: z.object({ id: z.number() }),
+    response: z.object({ id: z.number(), name: z.string() })
+  },
+  
+  // POST is inferred from body
   '/users': {
     body: z.object({ name: z.string(), email: z.string() }),
     response: z.object({ id: z.number(), name: z.string() })
@@ -543,18 +565,20 @@ const api = {
 
 const apiFetch = createFetch(api, 'https://api.example.com');
 
-// This uses GET (no body)
-const user = await apiFetch('/users/:id', { params: { id: 123 } });
+// Both calls are equivalent - both use GET
+const user1 = await apiFetch('/users/:id', { params: { id: 123 } });
+const user2 = await apiFetch('@get/users/:id', { params: { id: 123 } });
 
-// This uses POST (has body)
+// POST (inferred from body)
 const newUser = await apiFetch('/users', {
   body: { name: 'John', email: 'john@example.com' }
 });
 ```
 
-**Automatic method rules:**
-- If the request has a `body` → `POST`
-- If the request has no `body` → `GET`
+**Method inference rules:**
+- Request has a `body` → `POST`
+- Request has no `body` → `GET`
+- Method prefix specified → Uses that method
 
 ### Method Prefix with Path Parameters
 

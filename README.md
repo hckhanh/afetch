@@ -107,21 +107,30 @@ const newUser = await apiFetch('/users', {
 
 ### With HTTP Methods
 
-You can specify HTTP methods using the `@method` prefix in your API paths:
+what-the-fetch automatically infers HTTP methods: requests with a `body` use `POST`, and requests without a `body` use `GET`. You can also explicitly specify methods using the `@method` prefix for clarity or when you need other HTTP methods:
 
 ```typescript
 const api = {
-  '@get/users/:id': {
+  // Automatic method inference (these are equivalent)
+  '/users/:id': {  // Uses GET (no body)
     params: z.object({ id: z.number() }),
     response: z.object({ id: z.number(), name: z.string() }),
   },
-  '@post/users': {
+  '@get/users/:id': {  // Explicitly GET - same as above
+    params: z.object({ id: z.number() }),
+    response: z.object({ id: z.number(), name: z.string() }),
+  },
+  
+  // POST is inferred when body is present
+  '/users': {  // Uses POST (has body)
     body: z.object({ name: z.string(), email: z.string().email() }),
     response: z.object({ id: z.number(), name: z.string() }),
   },
+  
+  // Explicit methods for PUT, PATCH, DELETE
   '@put/users/:id': {
     params: z.object({ id: z.number() }),
-    body: z.object({ name: z.string().optional(), email: z.string().email().optional() }),
+    body: z.object({ name: z.string(), email: z.string().email() }),
     response: z.object({ id: z.number(), name: z.string() }),
   },
   '@delete/users/:id': {
@@ -132,27 +141,21 @@ const api = {
 
 const apiFetch = createFetch(api, 'https://api.example.com');
 
-// GET request
-const user = await apiFetch('@get/users/:id', { params: { id: 123 } });
+// These are equivalent - both use GET
+const user1 = await apiFetch('/users/:id', { params: { id: 123 } });
+const user2 = await apiFetch('@get/users/:id', { params: { id: 123 } });
 
-// POST request
-const newUser = await apiFetch('@post/users', {
+// POST (inferred from body)
+const newUser = await apiFetch('/users', {
   body: { name: 'John Doe', email: 'john@example.com' },
 });
 
-// PUT request
+// Explicit methods for clarity
 await apiFetch('@put/users/:id', {
   params: { id: 123 },
-  body: { name: 'Jane Doe' },
+  body: { name: 'Jane Doe', email: 'jane@example.com' },
 });
-
-// DELETE request
 await apiFetch('@delete/users/:id', { params: { id: 123 } });
-```
-
-**Note:** If you don't specify a method prefix:
-- Requests with a `body` will automatically use `POST`
-- Requests without a `body` will automatically use `GET`
 
 ### With Shared Headers
 
