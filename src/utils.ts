@@ -75,11 +75,13 @@ export function parseMethodFromPath(
   path: string,
 ): [string | undefined, string] {
   const match = methodPrefixRegex.exec(path)
+
   if (match) {
     const method = match[1].toUpperCase()
     const cleanPath = match[2] || '/'
     return [method, cleanPath]
   }
+
   return [undefined, path]
 }
 
