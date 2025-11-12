@@ -162,6 +162,52 @@ const newUser = await apiFetch('/users', {
 // newUser is typed as { id: number; name: string; email: string }
 ```
 
+#### Using HTTP Methods
+
+Specify HTTP methods explicitly using the `@method` prefix:
+
+```typescript
+const api = {
+  '@get/users/:id': {
+    params: z.object({ id: z.number() }),
+    response: z.object({ id: z.number(), name: z.string() })
+  },
+  '@post/users': {
+    body: z.object({ name: z.string(), email: z.string().email() }),
+    response: z.object({ id: z.number(), name: z.string() })
+  },
+  '@put/users/:id': {
+    params: z.object({ id: z.number() }),
+    body: z.object({ name: z.string() }),
+    response: z.object({ id: z.number(), name: z.string() })
+  },
+  '@patch/users/:id': {
+    params: z.object({ id: z.number() }),
+    body: z.object({ name: z.string().optional() }),
+    response: z.object({ id: z.number(), name: z.string() })
+  },
+  '@delete/users/:id': {
+    params: z.object({ id: z.number() }),
+    response: z.object({ success: z.boolean() })
+  }
+};
+
+const apiFetch = createFetch(api, 'https://api.example.com');
+
+// Explicitly use different HTTP methods
+const user = await apiFetch('@get/users/:id', { params: { id: 123 } });
+const created = await apiFetch('@post/users', { body: { name: 'John', email: 'john@example.com' } });
+await apiFetch('@put/users/:id', { params: { id: 123 }, body: { name: 'Jane' } });
+await apiFetch('@patch/users/:id', { params: { id: 123 }, body: { name: 'Jane Doe' } });
+await apiFetch('@delete/users/:id', { params: { id: 123 } });
+```
+
+<Callout title="Automatic Method Detection" type="info">
+  If you don't specify a method prefix, what-the-fetch will automatically:
+  - Use `POST` for requests with a body
+  - Use `GET` for requests without a body
+</Callout>
+
 ## Step-by-Step Tutorial
 
 Let's build a complete type-safe API client using what-the-fetch:

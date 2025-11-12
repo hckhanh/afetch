@@ -105,6 +105,55 @@ const newUser = await apiFetch('/users', {
 });
 ```
 
+### With HTTP Methods
+
+You can specify HTTP methods using the `@method` prefix in your API paths:
+
+```typescript
+const api = {
+  '@get/users/:id': {
+    params: z.object({ id: z.number() }),
+    response: z.object({ id: z.number(), name: z.string() }),
+  },
+  '@post/users': {
+    body: z.object({ name: z.string(), email: z.string().email() }),
+    response: z.object({ id: z.number(), name: z.string() }),
+  },
+  '@put/users/:id': {
+    params: z.object({ id: z.number() }),
+    body: z.object({ name: z.string().optional(), email: z.string().email().optional() }),
+    response: z.object({ id: z.number(), name: z.string() }),
+  },
+  '@delete/users/:id': {
+    params: z.object({ id: z.number() }),
+    response: z.object({ success: z.boolean() }),
+  },
+} as const;
+
+const apiFetch = createFetch(api, 'https://api.example.com');
+
+// GET request
+const user = await apiFetch('@get/users/:id', { params: { id: 123 } });
+
+// POST request
+const newUser = await apiFetch('@post/users', {
+  body: { name: 'John Doe', email: 'john@example.com' },
+});
+
+// PUT request
+await apiFetch('@put/users/:id', {
+  params: { id: 123 },
+  body: { name: 'Jane Doe' },
+});
+
+// DELETE request
+await apiFetch('@delete/users/:id', { params: { id: 123 } });
+```
+
+**Note:** If you don't specify a method prefix:
+- Requests with a `body` will automatically use `POST`
+- Requests without a `body` will automatically use `GET`
+
 ### With Shared Headers
 
 You can provide shared headers when creating the fetch function:
